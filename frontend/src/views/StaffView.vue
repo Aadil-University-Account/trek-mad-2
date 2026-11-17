@@ -1,10 +1,11 @@
 <script setup>
-import { auth } from '../auth'
+import StaffDashboard from '../components/StaffDashboard.vue'
 </script>
 
 <template>
   <div class="container page">
-    <h2 class="page-title">Staff Dashboard</h2>   
-    <div class="card-box">Welcome, {{ auth.name }}! (Features are added in the next milestones.)</div>
+    <h2 class="page-title">Staff Dashboard</h2>
+    <p class="page-sub">Manage the treks assigned to you.</p>
+    <StaffDashboard />
   </div>
 </template>
