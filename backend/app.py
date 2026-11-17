@@ -19,6 +19,9 @@ from routes.staff_routes import staff_bp
 from routes.user_routes import user_bp  
 from routes.booking_routes import booking_bp 
 from routes.job_routes import job_bp  
+from routes.public_routes import public_bp
+
+
 
 
 app.register_blueprint(auth_bp)
@@ -27,6 +30,9 @@ app.register_blueprint(staff_bp)
 app.register_blueprint(booking_bp) 
 app.register_blueprint(user_bp)
 app.register_blueprint(job_bp) 
+app.register_blueprint(public_bp)   
+
+
 
 def create_database():
     with app.app_context():

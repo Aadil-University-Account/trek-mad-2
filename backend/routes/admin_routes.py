@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 from models import db, User, StaffProfile, Trek, Booking
 from auth_utils import role_required
 from cache import clear_trek_cache
+from sqlalchemy import func
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
@@ -279,3 +280,47 @@ def all_bookings():
     if status:
         query = query.filter(Booking.status == status)
     return jsonify([b.to_dict() for b in query.order_by(Booking.id.desc()).all()])
+
+
+# -------------------------------------------------------------- statistics
+@admin_bp.route("/stats")
+@role_required("admin")
+def stats():
+    """Numbers used by the charts on the admin overview."""
+    # most popular treks = most non-cancelled bookings
+    popular = (
+        db.session.query(Trek.trek_name, func.count(Booking.id))
+        .join(Booking, Booking.trek_id == Trek.id)
+        .filter(Booking.status != "Cancelled")
+        .group_by(Trek.id)
+        .order_by(func.count(Booking.id).desc())
+        .limit(5)
+        .all()
+    )
+
+    # bookings made in each of the last 6 months
+    monthly = []
+    today = date.today().replace(day=1)
+    for i in range(5, -1, -1):
+        year, month = today.year, today.month - i
+        while month <= 0:
+            month += 12
+            year -= 1
+        count = Booking.query.filter(
+            func.strftime("%Y-%m", Booking.booking_date) == f"{year}-{month:02d}"
+        ).count()
+        monthly.append({"month": date(year, month, 1).strftime("%b %Y"), "count": count})
+
+    booking_status = {s: Booking.query.filter_by(status=s).count() for s in ["Booked", "Completed", "Cancelled"]}
+    trek_status = {
+        s: Trek.query.filter_by(status=s).count()
+        for s in ["Pending", "Approved", "Open", "Closed", "Ongoing", "Completed"]
+    }
+    return jsonify(
+        {
+            "popular": [{"name": p[0], "count": p[1]} for p in popular],
+            "monthly": monthly,
+            "booking_status": booking_status,
+            "trek_status": trek_status,
+        }
+    )

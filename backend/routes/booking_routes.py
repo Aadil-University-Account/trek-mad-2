@@ -26,6 +26,24 @@ def cancel_booking(booking_id):
     return jsonify({"message": "Booking cancelled"})
 
 
+@booking_bp.route("/bookings/<int:booking_id>/pay", methods=["PUT"])
+@role_required("user")
+def pay_booking(booking_id):
+    """Payment simulation: no real money, it only marks the booking as Paid."""
+    booking = db.session.get(Booking, booking_id)
+    if not booking or booking.user_id != g.user.id:
+        return jsonify({"message": "Booking not found"}), 404
+    if booking.status != "Booked":
+        return jsonify({"message": "Only active bookings can be paid"}), 400
+    if booking.payment_status == "Paid":
+        return jsonify({"message": "Already paid"}), 400
+
+    booking.payment_status = "Paid"
+    notify(g.user.id, f"Payment of Rs. {booking.trek.price} received for {booking.trek.trek_name} (simulated).")
+    db.session.commit()
+    return jsonify({"message": "Payment successful (simulated)"})
+
+
 # --------------------------------------------------------------- notifications
 @booking_bp.route("/notifications")
 @role_required("user")

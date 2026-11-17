@@ -60,7 +60,18 @@ async function downloadExport() {
   link.download = exportFile.value
   link.click()
 }
-
+async function pay(b) {
+  if (!confirm(`Pay ₹${b.price} for ${b.trek_name}? (simulated payment)`)) return
+  message.value = ''
+  error.value = ''
+  try {
+    const res = await api.put(`/bookings/${b.id}/pay`)
+    message.value = res.data.message
+    load()
+  } catch (err) {
+    error.value = errorMessage(err)
+  }
+}
 async function cancel(b) {
   if (!confirm(`Cancel booking for ${b.trek_name}?`)) return
   message.value = ''
@@ -108,6 +119,7 @@ async function cancel(b) {
               <td><span class="badge-soft" :class="'st-' + b.status">{{ b.status }}</span></td>
               <td><span class="badge-soft" :class="'st-' + b.payment_status">{{ b.payment_status }}</span></td>
               <td class="text-end text-nowrap">
+                <button v-if="b.status === 'Booked' && b.payment_status === 'Pending'" class="btn btn-sm btn-primary me-1" @click="pay(b)">Pay ₹{{ b.price }}</button>
                 <button v-if="canCancel(b)" class="btn btn-sm btn-outline-danger" @click="cancel(b)">Cancel</button>
               </td>
             </tr>
