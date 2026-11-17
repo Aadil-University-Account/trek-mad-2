@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_jwt_extended import JWTManager 
+from flask_jwt_extended import JWTManager
 from werkzeug.security import generate_password_hash
 from models import db, User
 
