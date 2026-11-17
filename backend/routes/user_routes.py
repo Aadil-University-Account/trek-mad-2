@@ -1,7 +1,7 @@
 from datetime import date
 from flask import Blueprint, request, jsonify, g
 from werkzeug.security import generate_password_hash
-from models import db, Trek, Booking
+from models import db, Trek, Booking, notify
 from auth_utils import role_required
 
 user_bp = Blueprint("user", __name__, url_prefix="/api")
@@ -70,6 +70,7 @@ def book_trek():
     booking = Booking(user_id=g.user.id, trek_id=trek.id, status="Booked", payment_status="Pending")
     trek.available_slots -= 1
     db.session.add(booking)
+    notify(g.user.id, f"Booking confirmed for {trek.trek_name} ({trek.start_date}).") 
     db.session.commit()
     return jsonify({"message": "Trek booked successfully!", "booking": booking.to_dict()}), 201
 

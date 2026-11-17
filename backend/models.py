@@ -119,3 +119,25 @@ class Booking(db.Model):
             "status": self.status,
             "payment_status": self.payment_status,
         }
+
+
+# Simple in-app notifications (booking confirmed / cancelled / export ready ...)
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    message = db.Column(db.String(300), nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "message": self.message,
+            "is_read": self.is_read,
+            "created_at": self.created_at.strftime("%d %b %H:%M"),
+        }
+
+
+def notify(user_id, message):
+    """Add a notification (the caller commits)."""
+    db.session.add(Notification(user_id=user_id, message=message))

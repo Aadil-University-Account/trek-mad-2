@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, g
-from models import db, Trek, Booking
+from models import db, Trek, Booking, notify
 from auth_utils import role_required
 
 staff_bp = Blueprint("staff", __name__, url_prefix="/api/staff")
@@ -70,6 +70,7 @@ def update_status(trek_id):
         for b in trek.bookings:
             if b.status == "Booked":
                 b.status = "Completed"
+                notify(b.user_id, f"{trek.trek_name} is completed. Hope you enjoyed the trek!")
     db.session.commit()
     return jsonify({"message": f"Trek marked as {new_status}"})
 
@@ -108,5 +109,6 @@ def remove_participant(booking_id):
 
     booking.status = "Cancelled"
     booking.trek.available_slots += 1
+    notify(booking.user_id, f"Your booking for {booking.trek.trek_name} was cancelled by the trek staff.")
     db.session.commit()
     return jsonify({"message": "Participant removed and slot released"})

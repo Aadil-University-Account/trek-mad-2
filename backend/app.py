@@ -17,12 +17,13 @@ from routes.auth_routes import auth_bp
 from routes.admin_routes import admin_bp  
 from routes.staff_routes import staff_bp
 from routes.user_routes import user_bp  
- 
+from routes.booking_routes import booking_bp 
 
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)  
 app.register_blueprint(staff_bp) 
+app.register_blueprint(booking_bp) 
 app.register_blueprint(user_bp)
 
 def create_database():
