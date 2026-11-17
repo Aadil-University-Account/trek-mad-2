@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+env/
+venv/
+.venv/
+
+# Flask / SQLite / Celery / Redis
+backend/instance/
+*.sqlite3
+*.db
+celerybeat-schedule*
+dump.rdb
+backend/static/exports/*
+backend/static/reports/*
+backend/outbox/*
+!backend/static/exports/.gitkeep
+!backend/static/reports/.gitkeep
+!backend/outbox/.gitkeep
+
+# Vue
+node_modules/
+dist/
+.vite/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
