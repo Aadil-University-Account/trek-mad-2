@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 from models import db, User, StaffProfile, Trek, Booking
 from auth_utils import role_required
+from cache import clear_trek_cache
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
@@ -84,6 +85,7 @@ def create_trek():
 
     db.session.add(trek)
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Trek created (status: Pending)", "trek": trek.to_dict()}), 201
 
 
@@ -106,6 +108,7 @@ def update_trek(trek_id):
         setattr(trek, key, value)
     trek.available_slots = clean["total_slots"] - booked
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Trek updated", "trek": trek.to_dict()})
 
 
@@ -119,6 +122,7 @@ def delete_trek(trek_id):
         return jsonify({"message": "This trek has bookings, so it cannot be removed. Close it instead."}), 400
     db.session.delete(trek)
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Trek removed"})
 
 
@@ -132,6 +136,7 @@ def approve_trek(trek_id):
         return jsonify({"message": "Only pending treks can be approved"}), 400
     trek.status = "Approved"
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Trek approved. Staff can now open it for booking."})
 
 
@@ -146,6 +151,7 @@ def assign_staff(trek_id):
         return jsonify({"message": "This staff account is deactivated"}), 400
     trek.assigned_staff_id = staff.id
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": f"{staff.user.name} assigned to {trek.trek_name}"})
 
 
@@ -189,6 +195,7 @@ def create_staff():
     )
     db.session.add(profile)
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Staff created", "staff": profile.to_dict()}), 201
 
 
@@ -216,6 +223,7 @@ def update_staff(staff_id):
             return jsonify({"message": "Password must be at least 6 characters"}), 400
         profile.user.password_hash = generate_password_hash(data["password"])
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Staff updated"})
 
 
@@ -251,6 +259,7 @@ def change_account_status(user_id):
         blocked = user.is_blacklisted or not user.is_active
         user.staff_profile.status = "Inactive" if blocked else "Active"
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Account updated"})
 
 

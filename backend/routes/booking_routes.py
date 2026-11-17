@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, g
 from models import db, Booking, Notification, notify
 from auth_utils import role_required
+from cache import clear_trek_cache
 
 booking_bp = Blueprint("booking", __name__, url_prefix="/api")
 
@@ -21,6 +22,7 @@ def cancel_booking(booking_id):
     booking.trek.available_slots += 1  # release the slot
     notify(g.user.id, f"Booking cancelled for {booking.trek.trek_name}.")
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Booking cancelled"})
 
 
@@ -37,4 +39,5 @@ def my_notifications():
 def mark_read():
     Notification.query.filter_by(user_id=g.user.id, is_read=False).update({"is_read": True})
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "ok"})

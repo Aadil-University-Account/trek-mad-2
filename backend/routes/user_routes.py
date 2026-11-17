@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, g
 from werkzeug.security import generate_password_hash
 from models import db, Trek, Booking, notify
 from auth_utils import role_required
+from cache import cached_response, clear_trek_cache 
 
 user_bp = Blueprint("user", __name__, url_prefix="/api")
 
@@ -32,16 +33,17 @@ def list_treks():
     if duration_max:
         query = query.filter(Trek.duration_days <= duration_max)
 
-    treks = query.order_by(Trek.start_date).all()
-    return jsonify([t.to_dict() for t in treks])
+    return cached_response("treks:list:" + request.full_path, lambda: [t.to_dict() for t in query.order_by(Trek.start_date).all()])
 
 
 @user_bp.route("/locations")
 @role_required("user", "admin", "staff")
 def locations():
-    rows = db.session.query(Trek.location).filter(Trek.status.in_(VISIBLE_STATUS)).distinct().all()
-    return jsonify(sorted(r[0] for r in rows))
+    def build():
+        rows = db.session.query(Trek.location).filter(Trek.status.in_(VISIBLE_STATUS)).distinct().all()
+        return sorted(r[0] for r in rows)
 
+    return cached_response("treks:locations", build)
 
 # ----------------------------------------------------------------- booking
 @user_bp.route("/bookings", methods=["POST"])
@@ -72,6 +74,7 @@ def book_trek():
     db.session.add(booking)
     notify(g.user.id, f"Booking confirmed for {trek.trek_name} ({trek.start_date}).") 
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Trek booked successfully!", "booking": booking.to_dict()}), 201
 
 

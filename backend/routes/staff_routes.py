@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 from models import db, Trek, Booking, notify
 from auth_utils import role_required
+from cache import clear_trek_cache
 
 staff_bp = Blueprint("staff", __name__, url_prefix="/api/staff")
 
@@ -50,6 +51,7 @@ def update_slots(trek_id):
     trek.available_slots = slots
     trek.total_slots = booked + slots  # keep total = booked + available
     db.session.commit()
+     clear_trek_cache()
     return jsonify({"message": "Available slots updated"})
 
 
@@ -72,6 +74,7 @@ def update_status(trek_id):
                 b.status = "Completed"
                 notify(b.user_id, f"{trek.trek_name} is completed. Hope you enjoyed the trek!")
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": f"Trek marked as {new_status}"})
 
 
@@ -111,4 +114,5 @@ def remove_participant(booking_id):
     booking.trek.available_slots += 1
     notify(booking.user_id, f"Your booking for {booking.trek.trek_name} was cancelled by the trek staff.")
     db.session.commit()
+    clear_trek_cache()
     return jsonify({"message": "Participant removed and slot released"})
