@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_jwt_extended import JWTManager 
 from werkzeug.security import generate_password_hash
 from models import db, User
 
@@ -10,6 +11,11 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['JWT_SECRET_KEY'] = 'my_secret_key'
 
 db.init_app(app)
+JWTManager(app)
+
+from routes.auth_routes import auth_bp
+
+app.register_blueprint(auth_bp)
 
 def create_database():
     with app.app_context():
